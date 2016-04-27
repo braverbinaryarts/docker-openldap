@@ -5,6 +5,7 @@ ENV LDAP_BASE 'dc=example,dc=com'
 ENV LDAP_PASS 'password'
 ENV LDAP_ORGN 'Example, Inc.'
 ENV LDAP_FQDN 'example.com'
+ENV LDAP_URLS 'ldapi:/// ldap:///'
 
 ENV DEBIAN_FRONTEND 'noninteractive'
 
@@ -34,5 +35,12 @@ RUN dpkg-reconfigure slapd
 
 # We could stop here.
 
+# Add OpenSSH public key support (generated using slaptest + openssh.schema)
 ADD files/openssh.ldif /etc/ldap/slapd.d/cn\=config/cn\=schema/cn\=\{4\}openssh.ldif
 RUN chown openldap:openldap /etc/ldap/slapd.d/cn\=config/cn\=schema/cn\=\{4\}openssh.ldif
+
+# Set up OLC indexes
+COPY files/olc.ldif /tmp/olc.ldif
+RUN sed "s/LDAP_BASE/${LDAP_BASE}/" -i'' /tmp/olc.ldif
+#RUN /usr/sbin/slapd -h ldapi:/// -F /etc/ldap/slapd.d &&\
+#  /usr/bin/ldapmodify -Y EXTERNAL -h ldapi:/// -f /tmp/olc.ldif
